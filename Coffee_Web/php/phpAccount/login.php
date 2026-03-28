@@ -51,7 +51,56 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+<canvas id="bg-canvas"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
 
+<script>
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const pts = Array.from({length:60}, ()=>({
+    x: Math.random(), y: Math.random(),
+    r: 0.6 + Math.random()*1.8,
+    speed: 0.00018 + Math.random()*0.00028,
+    drift: (Math.random()-0.5)*0.00025,
+    maxA: 0.12 + Math.random()*0.3,
+    col: Math.random()>0.5 ? '#c49454' : '#7a4a20',
+  }));
+
+  function draw(ts){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const W=canvas.width, H=canvas.height;
+    pts.forEach(p=>{
+      p.y -= p.speed; p.x += p.drift;
+      if(p.y<0){ p.y=1; p.x=Math.random(); }
+      if(p.x<0||p.x>1) p.drift*=-1;
+      const rise=1-p.y, fade=rise<0.1?rise/0.1:rise>0.85?(1-rise)/0.15:1;
+      ctx.save(); ctx.globalAlpha=p.maxA*fade;
+      ctx.beginPath(); ctx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.col; ctx.fill(); ctx.restore();
+    });
+
+    for(let i=0;i<5;i++){
+      const x=((i/5)+Math.sin(ts*0.0003+i)*0.07)*W;
+      const a=Math.sin((ts*0.0002+i/5)*Math.PI)*0.05;
+      const g=ctx.createLinearGradient(x,H,x+20,0);
+      g.addColorStop(0,`rgba(196,148,84,${a})`);
+      g.addColorStop(1,'rgba(196,148,84,0)');
+      ctx.save(); ctx.strokeStyle=g; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x,H);
+      ctx.bezierCurveTo(x+40,H*0.6,x-40,H*0.4,x+20,0);
+      ctx.stroke(); ctx.restore();
+    }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
 <body>
 
     <div class="auth-box">
