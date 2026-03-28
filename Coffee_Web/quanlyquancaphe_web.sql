@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th3 28, 2026 lúc 10:02 AM
+-- Thời gian đã tạo: Th3 28, 2026 lúc 11:08 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -39,8 +39,10 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`user_id`, `product_id`, `quantity`, `updated_at`) VALUES
-(14, 1, 1, '2026-03-28 16:00:51'),
-(14, 2, 1, '2026-03-28 16:00:52');
+(14, 1, 2, '2026-03-28 16:26:32'),
+(14, 2, 4, '2026-03-28 16:58:20'),
+(14, 8, 1, '2026-03-28 17:04:51'),
+(14, 10, 1, '2026-03-28 17:01:46');
 
 -- --------------------------------------------------------
 
@@ -67,6 +69,34 @@ INSERT INTO `categories` (`id`, `name`, `created_at`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `message` text NOT NULL,
+  `type` varchar(20) DEFAULT 'info',
+  `product_name` varchar(255) DEFAULT '',
+  `product_price` decimal(10,2) DEFAULT 0.00,
+  `is_read` tinyint(1) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `message`, `type`, `product_name`, `product_price`, `is_read`, `created_at`) VALUES
+(1, 14, '🛒 Đã thêm vào giỏ hàng', 'success', 'Cà phê đen', 25000.00, 1, '2026-03-28 16:26:32'),
+(2, 14, '🛒 Đã thêm vào giỏ hàng', 'success', 'Cà phê sữa', 30000.00, 1, '2026-03-28 16:26:53'),
+(3, 14, '✅ Mua hàng thành công', 'success', 'Cà phê đen', 25000.00, 1, '2026-03-28 16:39:06'),
+(4, 14, '🛒 Đã thêm vào giỏ hàng', 'success', 'Cà phê sữa', 30000.00, 0, '2026-03-28 16:58:20'),
+(5, 14, '🛒 Đã thêm vào giỏ hàng', 'success', 'Bánh Chuối', 30000.00, 0, '2026-03-28 17:04:51');
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `products`
 --
 
@@ -87,7 +117,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `category_id`, `price`, `quantity`, `description`, `image`, `status`, `created_at`) VALUES
-(1, 'Cà phê đen', 1, 25000.00, 48, 'Cà phê đen truyền thống', '69691485c7dcf.png', 'active', '2026-01-15 16:18:43'),
+(1, 'Cà phê đen', 1, 25000.00, 47, 'Cà phê đen truyền thống', '69691485c7dcf.png', 'active', '2026-01-15 16:18:43'),
 (2, 'Cà phê sữa', 1, 30000.00, 77, 'Cà phê sữa đá Việt Nam', '6969147ccedbf.png', 'active', '2026-01-15 16:18:43'),
 (3, 'Trà Đào Cam Sả', 2, 35000.00, 0, 'Trà trái cây thơm mát', '6969146ed1338.png', 'active', '2026-01-15 16:18:43'),
 (5, 'Bánh Su Kem', 4, 30000.00, 122, 'ngon', '6969de2cc4cf3.png', 'active', '2026-01-16 06:43:56'),
@@ -161,7 +191,8 @@ INSERT INTO `user_invoices` (`id`, `user_id`, `product_name`, `quantity`, `total
 (27, 9, 'Cà phê đen', 1, 25000, '2026-03-08 13:12:59'),
 (28, 14, 'Cà phê đen', 1, 25000, '2026-03-28 16:00:15'),
 (29, 14, 'Cà phê sữa', 1, 30000, '2026-03-28 16:00:16'),
-(30, 14, 'Bánh Su Kem', 1, 30000, '2026-03-28 16:00:17');
+(30, 14, 'Bánh Su Kem', 1, 30000, '2026-03-28 16:00:17'),
+(31, 14, 'Cà phê đen', 1, 25000, '2026-03-28 16:39:06');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -179,6 +210,13 @@ ALTER TABLE `cart`
 --
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Chỉ mục cho bảng `products`
@@ -213,6 +251,12 @@ ALTER TABLE `categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT cho bảng `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT cho bảng `products`
 --
 ALTER TABLE `products`
@@ -228,7 +272,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT cho bảng `user_invoices`
 --
 ALTER TABLE `user_invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- Các ràng buộc cho các bảng đã đổ
@@ -240,6 +284,12 @@ ALTER TABLE `user_invoices`
 ALTER TABLE `cart`
   ADD CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `products`
