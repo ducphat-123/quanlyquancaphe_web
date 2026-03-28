@@ -81,8 +81,10 @@ function openCartConfirmModal(selectedItems, selectedTotal) {
   modalProduct.innerText = names;
   modalQty.innerText = quantity;
   modalTotal.innerText = `${new Intl.NumberFormat("vi-VN").format(selectedTotal)} VNĐ`;
-  modalAddress.innerText = window.userAddress || "Chưa có địa chỉ";
-
+  modalAddress.innerText =
+    typeof userAddress !== "undefined" && userAddress.trim() !== ""
+      ? userAddress
+      : "Chưa cập nhật địa chỉ";
   cartPendingCheckout = {
     selectedIds: selectedItems.map((p) => Number(p.id)),
     selectedItems,

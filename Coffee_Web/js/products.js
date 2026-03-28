@@ -1,6 +1,81 @@
 let pendingAction = null;
 let notifications = [];
 
+const NOTIFICATION_API = "../phpUser/notifications.php";
+
+/* ===== NOTIFICATION API ===== */
+function loadNotifications() {
+  fetch(NOTIFICATION_API)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status === "success") {
+        notifications = data.data || [];
+        updateNotificationPanel();
+        updateBadge();
+      }
+    })
+    .catch((err) => {
+      console.error("Load notifications failed", err);
+    });
+}
+
+function saveNotification(
+  message,
+  type = "info",
+  productName = "",
+  productPrice = 0,
+) {
+  const payload = new URLSearchParams();
+  payload.append("action", "add");
+  payload.append("message", message);
+  payload.append("type", type);
+  payload.append("product_name", productName);
+  payload.append("product_price", productPrice);
+
+  return fetch(NOTIFICATION_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: payload.toString(),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status === "success") {
+        const notif = data.notification;
+        if (notif) {
+          // Kiểm tra trùng trước khi thêm vào local array
+          const exists = notifications.some((n) => n.id === notif.id);
+          if (!exists) {
+            notifications.unshift(notif);
+            updateNotificationPanel();
+            updateBadge();
+          }
+        }
+      }
+      return data;
+    });
+}
+
+function markNotificationRead(id) {
+  const payload = new URLSearchParams();
+  payload.append("action", "read");
+  payload.append("id", id);
+
+  return fetch(NOTIFICATION_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: payload.toString(),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status === "success") {
+        notifications = notifications.filter((n) => n.id !== id);
+        updateNotificationPanel();
+        updateBadge();
+      }
+      return data;
+    });
+}
+
 /* ===== NOTIFICATION PANEL ===== */
 function toggleNotificationPanel() {
   const panel = document.getElementById("notificationPanel");
@@ -12,7 +87,7 @@ function closeNotificationPanel() {
   panel.classList.remove("active");
 }
 
-/* ===== ADD NOTIFICATION ===== */
+/* ===== ADD NOTIFICATION LOCAL (fallback only) ===== */
 function addNotificationToPanel(message, type, productName, productPrice) {
   const timestamp = new Date().toLocaleTimeString("vi-VN");
 
@@ -31,9 +106,12 @@ function addNotificationToPanel(message, type, productName, productPrice) {
 
 /* ===== DELETE NOTIFICATION ===== */
 function deleteNotification(notifId) {
-  notifications = notifications.filter((n) => n.id !== notifId);
-  updateNotificationPanel();
-  updateBadge();
+  markNotificationRead(notifId).catch(() => {
+    // Nếu API lỗi, vẫn cập nhật local
+    notifications = notifications.filter((n) => n.id !== notifId);
+    updateNotificationPanel();
+    updateBadge();
+  });
 }
 
 /* ===== UPDATE BADGE ===== */
@@ -80,8 +158,6 @@ function updateNotificationPanel() {
           <div class="notification-item-time">
             ${notif.timestamp}
           </div>
-
-        
         </div>
       </div>
     `,
@@ -91,6 +167,9 @@ function updateNotificationPanel() {
 
 /* ===== MODAL ===== */
 function openModal(type, id, btn) {
+  if (typeof loadNotifications === "function") {
+    loadNotifications();
+  }
   const card = btn.closest(".product-card");
 
   if (!card) return;
@@ -130,7 +209,10 @@ function openModal(type, id, btn) {
   modalProduct.innerText = name;
   modalQty.innerText = qty;
   modalTotal.innerText = total.toLocaleString() + " VNĐ";
-  modalAddress.innerText = window.userAddress || "Chưa có địa chỉ";
+  modalAddress.innerText =
+    typeof userAddress !== "undefined" && userAddress.trim() !== ""
+      ? userAddress
+      : "Chưa cập nhật địa chỉ";
 
   pendingAction = { type, id, qty, productName: name, productPrice: price };
 
@@ -147,7 +229,6 @@ function closeModal() {
 function confirmAction() {
   if (!pendingAction) return;
 
-  // ✅ FIX: Lưu dữ liệu vào biến local TRƯỚC khi closeModal() xóa pendingAction
   const { type, id, qty, productName, productPrice } = pendingAction;
 
   fetch("products.php", {
@@ -166,7 +247,7 @@ function confirmAction() {
       showNotification(
         data.msg || "Có lỗi xảy ra",
         data.status === "success" ? "success" : "error",
-        productName, // ✅ dùng biến local thay vì pendingAction
+        productName,
         productPrice,
       );
     })
@@ -183,9 +264,7 @@ function showNotification(
   productName = "",
   productPrice = 0,
 ) {
-  addNotificationToPanel(msg, type, productName, productPrice);
-  updateBadge();
-
+  // Hiển thị toast
   const notification = document.createElement("div");
   notification.className = `notification ${type}`;
   notification.innerHTML = `
@@ -196,6 +275,15 @@ function showNotification(
 
   document.body.appendChild(notification);
   setTimeout(() => notification.classList.add("show"), 10);
+
+  // Lưu vào DB → saveNotification() tự cập nhật panel (KHÔNG dùng addNotificationToPanel ở đây)
+  saveNotification(msg, type, productName, productPrice).catch(() => {
+    // Fallback nếu DB lỗi: thêm local
+    addNotificationToPanel(msg, type, productName, productPrice);
+    updateBadge();
+  });
+
+  // Toast tự ẩn sau 3 giây
   setTimeout(() => {
     notification.classList.remove("show");
     setTimeout(() => notification.remove(), 300);
@@ -210,3 +298,9 @@ function addToCart(id, btn) {
 function buyNow(id, btn) {
   openModal("buy", id, btn);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof loadNotifications === "function") {
+    loadNotifications();
+  }
+});
