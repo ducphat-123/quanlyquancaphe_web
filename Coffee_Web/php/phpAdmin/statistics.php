@@ -213,7 +213,7 @@ rsort($availableYears);
       <li><a href="categories.php">Quản lý danh mục sản phẩm</a></li>
       <li><a href="products.php">Quản lý sản phẩm</a></li>
       <li><a href="orders.php">Quản lý hóa đơn</a></li>
-      <li><a href="statistics.php" style="background:#34495e;border-radius:5px;">Thống kê</a></li>
+      <li><a href="statistics.php" >Thống kê</a></li>
     </ul>
   </aside>
 
