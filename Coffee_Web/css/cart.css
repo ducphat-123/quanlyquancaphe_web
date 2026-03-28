@@ -1,0 +1,133 @@
+.welcome table {
+  width: 100%;
+  margin-top: 15px;
+  background: #ffffff;
+  border-collapse: collapse;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+}
+
+.welcome th,
+.welcome td {
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.welcome th {
+  background: #f7f3f0;
+  color: #5e3a30;
+  text-align: left;
+  border-bottom: 2px solid #e2d0c9;
+}
+
+.welcome tr.cart-total-row td {
+  background: #fdf8f5;
+  font-weight: bold;
+  font-size: 16px;
+  border-top: 2px solid #e2d0c9;
+}
+
+.cart-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cart-item img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.cart-item-info p {
+  margin: 4px 0 0;
+  color: #777;
+  font-size: 12px;
+}
+
+#selectAll {
+  width: 18px;
+  height: 18px;
+}
+
+.item-select {
+  width: 18px;
+  height: 18px;
+}
+
+#checkoutBtn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  border: none;
+  background: #4b2e2a;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#checkoutBtn:disabled {
+  background: #b3a09a;
+  cursor: default;
+}
+
+.welcome p {
+  font-size: 16px;
+  color: #555;
+}
+
+/* Notification toast for cart */
+.notification {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(0.95);
+  background: #fff !important;
+  min-width: 280px !important;
+  max-width: 420px !important;
+  border-radius: 16px !important;
+  border: 2px solid #d4a574 !important;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25) !important;
+  z-index: 2000 !important;
+  opacity: 0;
+  transition: all 0.25s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 14px 18px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.notification.success {
+  border-color: #2e7d32 !important;
+}
+
+.notification.error {
+  border-color: #c62828 !important;
+}
+
+.notification-content {
+  font-size: 14px !important;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #333;
+  text-align: center;
+  width: 100% !important;
+  padding: 8px !important;
+  margin: 0 !important;
+  line-height: 1.2;
+  word-break: break-word;
+  white-space: normal !important;
+}

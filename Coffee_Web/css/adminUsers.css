@@ -1,0 +1,148 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* LAYOUT */
+.layout {
+    display: flex;
+    height: 100vh;          
+    background: #f4f4f4;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #4b2e2a;
+    color: white;
+    padding: 20px;          
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar li {
+    padding: 12px;
+    border-radius: 5px;
+}
+
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+}
+
+.sidebar li:hover{
+    background: #34495e;   
+}
+
+/* CONTENT */
+.content {
+    flex: 1;
+    padding: 20px 30px;  
+}
+
+/* TOP BAR */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.topbar h1 {
+    font-size: 22px;
+}
+
+.account {
+    font-size: 14px;
+}
+
+.account a {
+    text-decoration: none;
+    color: #e74c3c;
+    margin-left: 5px;
+}
+
+.account a:hover {
+    text-decoration: underline;
+}
+
+/* TABLE USERS */
+table {
+    width: 100%;
+    background: white;
+    border-collapse: collapse;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+th {
+    background: #4b2e2a;
+    color: white;
+    padding: 12px;
+    text-align: center;
+}
+
+td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+    background: #f9f9f9;
+}
+
+/* BUTTON */
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-delete:hover {
+    opacity: 0.85;
+}
+
+/* SEARCH */
+.search-form {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.search-form input {
+  padding: 6px 10px;
+  width: 260px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.search-form button {
+  padding: 6px 14px;
+  background: #4b2e2a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-form button:hover {
+  background: #6f4e37;
+}
