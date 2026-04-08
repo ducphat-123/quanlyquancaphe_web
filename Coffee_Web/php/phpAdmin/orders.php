@@ -24,31 +24,76 @@ $date_from = $_GET["date_from"] ?? "";
 $date_to   = $_GET["date_to"] ?? "";
 $search    = trim($_GET["txt_search_invoice"] ?? "");
 
-$query = "SELECT ui.*, u.name AS customer_name, u.username
-          FROM user_invoices ui
-          LEFT JOIN users u ON ui.user_id = u.id
+// $query = "SELECT ui.*, u.name AS customer_name, u.username
+//           FROM user_invoices ui
+//           LEFT JOIN users u ON ui.user_id = u.id
+//           WHERE 1=1";
+// Lấy thông tin từ orders, nối với users (lấy tên khách) và vouchers (lấy tên mã)
+// Dùng subquery để đếm xem đơn này có bao nhiêu ly/món
+$query = "SELECT o.*, u.name AS customer_name, u.username, v.voucher_code,
+          (SELECT COUNT(id) FROM user_invoices WHERE order_id = o.id) as item_count
+          FROM orders o
+          LEFT JOIN users u ON o.user_id = u.id
+          LEFT JOIN vouchers v ON o.voucher_id = v.voucher_id 
           WHERE 1=1";
+// if ($date_from !== "") {
+//     $query .= " AND DATE(ui.created_at) >= '" . $conn->real_escape_string($date_from) . "'";
+// }
 
+// if ($date_to !== "") {
+//     $query .= " AND DATE(ui.created_at) <= '" . $conn->real_escape_string($date_to) . "'";
+// }
+
+// if ($search !== "") {
+//     $s = $conn->real_escape_string($search);
+//     $query .= " AND (u.name LIKE '%$s%'
+//                 OR u.username LIKE '%$s%'
+//                 OR ui.product_name LIKE '%$s%')";
+// }
 if ($date_from !== "") {
-    $query .= " AND DATE(ui.created_at) >= '" . $conn->real_escape_string($date_from) . "'";
+    $query .= " AND DATE(o.created_at) >= '" . $conn->real_escape_string($date_from) . "'";
 }
 
 if ($date_to !== "") {
-    $query .= " AND DATE(ui.created_at) <= '" . $conn->real_escape_string($date_to) . "'";
+    $query .= " AND DATE(o.created_at) <= '" . $conn->real_escape_string($date_to) . "'";
 }
 
 if ($search !== "") {
     $s = $conn->real_escape_string($search);
-    $query .= " AND (u.name LIKE '%$s%'
-                OR u.username LIKE '%$s%'
-                OR ui.product_name LIKE '%$s%')";
+    $query .= " AND (
+        u.name LIKE '%$s%' 
+        OR u.username LIKE '%$s%' 
+        OR v.voucher_code LIKE '%$s%'
+        OR EXISTS (
+            SELECT 1 
+            FROM user_invoices ui 
+            WHERE ui.order_id = o.id AND ui.product_name LIKE '%$s%'
+        )
+    )";
 }
 
-$query .= " ORDER BY ui.id DESC";
-$invoices = $conn->query($query);
+$query .= " ORDER BY o.id DESC";
+try {
+    $invoices = $conn->query($query);
+} catch (mysqli_sql_exception $e) {
+    echo "<div style='background:#ffdddd; padding:15px; border:1px solid red; margin-bottom: 20px;'>";
+    echo "<strong>Lỗi MySQL báo về:</strong> " . $e->getMessage() . "<br><br>";
+    echo "<strong>Câu lệnh SQL lúc chạy:</strong> " . $query;
+    echo "</div>";
+    exit;
+}
+// $invoices = $conn->query($query);
 
 /* ===== TÍNH TỔNG DOANH THU ===== */
-$revenue_query = "SELECT SUM(total_price) AS total FROM user_invoices WHERE 1=1";
+// $revenue_query = "SELECT SUM(total_price) AS total FROM user_invoices WHERE 1=1";
+// if ($date_from !== "") {
+//     $revenue_query .= " AND DATE(created_at) >= '" . $conn->real_escape_string($date_from) . "'";
+// }
+// if ($date_to !== "") {
+//     $revenue_query .= " AND DATE(created_at) <= '" . $conn->real_escape_string($date_to) . "'";
+// }
+// $total_revenue = $conn->query($revenue_query)->fetch_assoc()["total"] ?? 0;
+$revenue_query = "SELECT SUM(final_amount) AS total FROM orders WHERE 1=1";
 if ($date_from !== "") {
     $revenue_query .= " AND DATE(created_at) >= '" . $conn->real_escape_string($date_from) . "'";
 }
@@ -56,23 +101,29 @@ if ($date_to !== "") {
     $revenue_query .= " AND DATE(created_at) <= '" . $conn->real_escape_string($date_to) . "'";
 }
 $total_revenue = $conn->query($revenue_query)->fetch_assoc()["total"] ?? 0;
-
 /* ===== TOP KHÁCH HÀNG ===== */
+// $customer_stats_query = "SELECT u.name AS customer_name, u.username,
+//                          COUNT(ui.id) AS order_count,
+//                          SUM(ui.total_price) AS total_spent
+//                          FROM user_invoices ui
+//                          LEFT JOIN users u ON ui.user_id = u.id
+//                          WHERE 1=1";
+/* ===== TOP KHÁCH HÀNG (Dựa trên số tiền Thực thu) ===== */
 $customer_stats_query = "SELECT u.name AS customer_name, u.username,
-                         COUNT(ui.id) AS order_count,
-                         SUM(ui.total_price) AS total_spent
-                         FROM user_invoices ui
-                         LEFT JOIN users u ON ui.user_id = u.id
+                         COUNT(o.id) AS order_count,
+                         SUM(o.final_amount) AS total_spent
+                         FROM orders o
+                         LEFT JOIN users u ON o.user_id = u.id
                          WHERE 1=1";
 
 if ($date_from !== "") {
-    $customer_stats_query .= " AND DATE(ui.created_at) >= '" . $conn->real_escape_string($date_from) . "'";
+    $customer_stats_query .= " AND DATE(o.created_at) >= '" . $conn->real_escape_string($date_from) . "'";
 }
 if ($date_to !== "") {
-    $customer_stats_query .= " AND DATE(ui.created_at) <= '" . $conn->real_escape_string($date_to) . "'";
+    $customer_stats_query .= " AND DATE(o.created_at) <= '" . $conn->real_escape_string($date_to) . "'";
 }
 
-$customer_stats_query .= " GROUP BY ui.user_id ORDER BY total_spent DESC LIMIT 3";
+$customer_stats_query .= " GROUP BY o.user_id ORDER BY total_spent DESC LIMIT 3";
 $customer_stats = $conn->query($customer_stats_query);
 ?>
 
@@ -82,8 +133,8 @@ $customer_stats = $conn->query($customer_stats_query);
 <head>
     <meta charset="UTF-8">
     <title>Quản lý hóa đơn</title>
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/home.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/orders.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../css/home.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../css/orders.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -95,6 +146,7 @@ $customer_stats = $conn->query($customer_stats_query);
                 <li><a href="adminHome.php">Trang chủ</a></li>
                 <li><a href="adminUsers.php">Quản lý người dùng</a></li>
                 <li><a href="categories.php">Quản lý danh mục sản phẩm</a></li>
+                <li><a href="vouchers.php">Quản lý mã giảm giá</a></li>
                 <li><a href="products.php">Quản lý sản phẩm</a></li>
                 <li><a href="orders.php" class="active">Quản lý hóa đơn</a></li>
                 <li><a href="statistics.php">Thống kê</a></li>
@@ -157,8 +209,8 @@ $customer_stats = $conn->query($customer_stats_query);
                     <h3>Bộ lọc hóa đơn</h3>
                     <form method="GET" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;">
                         <div class="form-group">
-                            <label>Tìm kiếm</label>
-                            <input type="text" name="txt_search_invoice" value="<?= htmlspecialchars($search) ?>">
+                            <label>Tìm kiếm (Khách hàng / Mã voucher)</label>
+                            <input type="text" name="txt_search_invoice" value="<?= htmlspecialchars($search) ?>" placeholder="Nhập tên, username hoặc mã code...">
                         </div>
                         <div class="form-group">
                             <label>Từ ngày</label>
@@ -183,9 +235,10 @@ $customer_stats = $conn->query($customer_stats_query);
                             <tr>
                                 <th>Mã HĐ</th>
                                 <th>Khách hàng</th>
-                                <th>Sản phẩm</th>
-                                <th>Số lượng</th>
-                                <th>Tổng tiền</th>
+                                <th>Số lượng món</th>
+                                <th>Tổng tiền gốc</th>
+                                <th>Mã giảm giá</th>
+                                <th>Thực thu</th>
                                 <th>Ngày mua</th>
                                 <th>Thao tác</th>
                             </tr>
@@ -194,27 +247,35 @@ $customer_stats = $conn->query($customer_stats_query);
                             <?php if ($invoices->num_rows > 0): ?>
                                 <?php while ($row = $invoices->fetch_assoc()): ?>
                                     <tr>
-                                        <td>#<?= $row["id"] ?></td>
+                                        <td style="text-align:center;"><strong>#<?= $row["id"] ?></strong></td>
                                         <td>
-                                            <strong><?= htmlspecialchars($row["customer_name"]) ?></strong><br>
-                                            <small>@<?= htmlspecialchars($row["username"]) ?></small>
+                                            <strong><?= htmlspecialchars($row["customer_name"] ?? 'Khách lẻ') ?></strong><br>
+                                            <small>@<?= htmlspecialchars($row["username"] ?? 'N/A') ?></small>
                                         </td>
-                                        <td><?= htmlspecialchars($row["product_name"]) ?></td>
-                                        <td><?= $row["quantity"] ?></td>
-                                        <td><strong><?= number_format($row["total_price"], 0, ',', '.') ?>đ</strong></td>
-                                        <td><?= date("d/m/Y H:i", strtotime($row["created_at"])) ?></td>
-                                        <td>
-                                            <button onclick="viewInvoiceDetail(<?= $row['id'] ?>)" class="btn btn-info">Chi tiết</button>
-                                            <form method="POST" style="display:inline" onsubmit="return confirm('Xóa hóa đơn này?')">
-                                                <input type="hidden" name="id_invoice" value="<?= $row['id'] ?>">
-                                                <button name="btn_delete_invoice" class="btn btn-danger">Xóa</button>
-                                            </form>
+                                        <td style="text-align:center;"><span class="badge"><?= $row["item_count"] ?> món</span></td>
+                                        <td style="text-align:center; color:#555;"><del><?= number_format($row["total_amount"], 0, ',', '.') ?>đ</del></td>
+                                        
+                                        <td style="text-align:center;">
+                                            <?php if ($row["discount_amount"] > 0): ?>
+                                                <strong style="color:#e74c3c;">-<?= number_format($row["discount_amount"], 0, ',', '.') ?>đ</strong><br>
+                                                <small style="background:#f1c40f; padding:2px 5px; border-radius:3px; color:#000;">
+                                                    <?= htmlspecialchars($row["voucher_code"]) ?>
+                                                </small>
+                                            <?php else: ?>
+                                                <span style="color:#999;">-</span>
+                                            <?php endif; ?>
                                         </td>
+                                        
+                                        <td style="text-align:center;"><strong style="color:#28a745; font-size:16px;"><?= number_format($row["final_amount"], 0, ',', '.') ?>đ</strong></td>
+                                        <td style="text-align:center;"><?= date("d/m/Y H:i", strtotime($row["created_at"])) ?></td>
+                                        <td style="text-align:center;">
+                                            <button onclick="viewInvoiceDetail(<?= $row['id'] ?>)" class="btn btn-info" style="background:#17a2b8; color:white;">Chi tiết</button>
+                                            <form method="POST" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ hóa đơn này?')">
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="7" style="text-align:center;">Không có hóa đơn</td>
+                                    <td colspan="8" style="text-align:center;">Không có hóa đơn</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -227,28 +288,29 @@ $customer_stats = $conn->query($customer_stats_query);
 
     <!-- MODAL -->
     <div id="detailModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="width: 500px;">
             <span class="close" onclick="closeDetailModal()">&times;</span>
-            <h3>Chi tiết hóa đơn #<span id="detail_invoice_id"></span></h3>
-            <div id="invoice_details_content">Đang tải...</div>
-        </div>
+            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">Chi tiết hóa đơn #<span id="detail_invoice_id"></span></h3>
+            <div id="invoice_details_content" style="margin-top: 15px;">Đang tải...</div>
     </div>
 
     <script>
         function viewInvoiceDetail(id) {
-            detail_invoice_id.innerText = id;
-            detailModal.style.display = 'block';
+                        document.getElementById('detail_invoice_id').innerText = id;
+            document.getElementById('detailModal').style.display = 'block';
 
+            // Gọi API lấy chi tiết món (File này bạn nhớ viết query từ bảng user_invoices WHERE order_id = id nhé)
             fetch('get_order_details.php?id_invoice=' + id)
                 .then(r => r.text())
-                .then(html => invoice_details_content.innerHTML = html);
+                .then(html => document.getElementById('invoice_details_content').innerHTML = html)
+                .catch(err => document.getElementById('invoice_details_content').innerHTML = '<span style="color:red">Lỗi tải dữ liệu</span>');
         }
 
         function closeDetailModal() {
-            detailModal.style.display = 'none';
+            document.getElementById('detailModal').style.display = 'none';
         }
         window.onclick = e => {
-            if (e.target === detailModal) detailModal.style.display = 'none';
+            if (e.target === document.getElementById('detailModal')) closeDetailModal();
         };
     </script>
 

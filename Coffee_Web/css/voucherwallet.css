@@ -1,0 +1,58 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* LAYOUT (Đã mở khóa) */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #4b2e2a; /* Nâu cà phê đậm */
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar li {
+  margin-bottom: 5px; /* Thêm chút khoảng cách giữa các nút */
+}
+
+/* LINK TRONG SIDEBAR */
+.sidebar a {
+  text-decoration: none;
+  color: white;
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  transition: all 0.3s ease; /* Thêm hiệu ứng chuyển màu mượt mà */
+}
+
+/* HOVER VÀ ACTIVE TRONG SIDEBAR (Đã sửa màu) */
+.sidebar a:hover, 
+.sidebar a.active {
+  background: #6f4e37; /* Nâu nhạt */
+  color: white;
+}
+
+/* CONTENT */
+.content {
+  flex: 1;
+  padding: 20px 30px;
+}

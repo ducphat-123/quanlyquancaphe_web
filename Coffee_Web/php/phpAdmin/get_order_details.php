@@ -2,41 +2,68 @@
 session_start();
 include "../connect.php";
 
-/* ===== CHECK QUYỀN ===== */
-if (($_SESSION["role"] ?? "") !== "admin") {
-    echo "<p style='color:red'>Không có quyền truy cập!</p>";
+// Kiểm tra quyền admin
+if (!isset($_SESSION["role"]) || $_SESSION["role"] !== "admin") {
+    echo "Không có quyền truy cập.";
     exit;
 }
 
-/* ===== LẤY ID HÓA ĐƠN ===== */
-$id_invoice = (int)($_GET["id_invoice"] ?? 0);
-if ($id_invoice <= 0) {
-    echo "<p style='color:red'>Hóa đơn không hợp lệ!</p>";
-    exit;
+if (isset($_GET['id_invoice'])) {
+    $id_invoice = (int)$_GET['id_invoice'];
+
+    /* ===== QUERY MỚI: TÌM TẤT CẢ CÁC MÓN THUỘC VỀ ORDER NÀY ===== */
+    $sql = "
+        SELECT ui.*, u.name AS customer_name, u.username
+        FROM user_invoices ui
+        LEFT JOIN users u ON ui.user_id = u.id
+        WHERE ui.order_id = $id_invoice
+    ";
+    
+    $result = $conn->query($sql);
+
+    if ($result && $result->num_rows > 0) {
+        // Bắt đầu vẽ bảng HTML trả về cho Popup
+        echo '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+        echo '<thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: left;">Sản phẩm</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">Số lượng</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: right;">Đơn giá</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: right;">Thành tiền</th>
+                </tr>
+              </thead>';
+        echo '<tbody>';
+        
+        $sum_items = 0; // Biến tính tổng tiền nháp
+
+        while ($row = $result->fetch_assoc()) {
+            // Do bảng của bạn đang gộp thành total_price, mình tính ngược lại đơn giá 1 ly
+            $unit_price = $row['total_price'] / $row['quantity']; 
+            $sum_items += $row['total_price'];
+
+            echo '<tr>';
+            echo '<td style="padding: 10px; border-bottom: 1px solid #eee;">' . htmlspecialchars($row['product_name']) . '</td>';
+            echo '<td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">' . $row['quantity'] . '</td>';
+            echo '<td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">' . number_format($unit_price, 0, ',', '.') . 'đ</td>';
+            echo '<td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">' . number_format($row['total_price'], 0, ',', '.') . 'đ</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody>';
+        echo '</table>';
+
+        // Hiển thị thêm dòng tổng cộng tạm tính dưới cùng cho rõ ràng
+        echo '<div style="text-align: right; margin-top: 15px; font-size: 16px;">';
+        echo 'Tổng cộng: <strong style="color: #e74c3c;">' . number_format($sum_items, 0, ',', '.') . 'đ</strong>';
+        echo '</div>';
+
+    } else {
+        echo '<div style="padding: 20px; text-align: center; color: #777;">Không tìm thấy chi tiết món nào cho hóa đơn này! (Hoặc hóa đơn bị lỗi dữ liệu)</div>';
+    }
+} else {
+    echo "Thiếu mã hóa đơn.";
 }
-
-/* ===== QUERY CHI TIẾT HÓA ĐƠN ===== */
-$sql = "
-    SELECT ui.*, u.name AS customer_name, u.username
-    FROM user_invoices ui
-    LEFT JOIN users u ON ui.user_id = u.id
-    WHERE ui.id = $id_invoice
-";
-
-$result = $conn->query($sql);
-
-if (!$result || $result->num_rows === 0) {
-    echo "<p style='color:red'>Không tìm thấy hóa đơn!</p>";
-    exit;
-}
-
-$invoice = $result->fetch_assoc();
-
-/* ===== TÍNH TOÁN ===== */
-$quantity    = max(1, (int)$invoice["quantity"]); // tránh chia cho 0
-$unit_price  = $invoice["total_price"] / $quantity;
 ?>
-
 <div style="padding:20px">
 
     <!-- THÔNG TIN KHÁCH HÀNG -->

@@ -2,7 +2,7 @@
     $host = "localhost";
     $user = "root";
     $pass = "";
-    $db   = "quanlyquancaphe_web";
+    $db   = "quanlyquancaphe_web1";
 
     $conn = mysqli_connect($host, $user, $pass, $db);
 

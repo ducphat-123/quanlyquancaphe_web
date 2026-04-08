@@ -57,18 +57,24 @@ if (isset($_POST["btn_delete_category"])) {
     }
 }
 
-/* ===== SEARCH ===== */
+/* ===== SEARCH AN TOÀN ===== */
 $search = trim($_GET["txt_search_category"] ?? "");
+$search_param = "%$search%"; // Chuẩn bị tham số tìm kiếm
 
+// Sử dụng dấu ? để làm đại diện (placeholder)
 $sql = "
     SELECT c.id, c.name, COUNT(p.id) AS product_count
     FROM categories c
     LEFT JOIN products p ON c.id = p.category_id
-    WHERE c.name LIKE '%$search%'
+    WHERE c.name LIKE ?
     GROUP BY c.id, c.name
     ORDER BY c.id DESC
 ";
-$result = $conn->query($sql);
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $search_param); // "s" nghĩa là string
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -77,8 +83,8 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <title>Quản lý danh mục</title>
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/home.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/categories.css?v=<?php echo time(); ?>">
+     <link rel="stylesheet" href="../../css/home.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../css/categories.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -90,6 +96,7 @@ $result = $conn->query($sql);
                 <li><a href="adminHome.php">Trang chủ</a></li>
                 <li><a href="adminUsers.php">Quản lý người dùng</a></li>
                 <li><a href="categories.php" class="active">Quản lý danh mục sản phẩm</a></li>
+                <li><a href="vouchers.php">Quản lý mã giảm giá</a></li>
                 <li><a href="products.php">Quản lý sản phẩm</a></li>
                 <li><a href="orders.php">Quản lý hóa đơn</a></li>
                 <li><a href="statistics.php">Thống kê</a></li>

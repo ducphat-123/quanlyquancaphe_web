@@ -87,6 +87,9 @@ $user = $stmt->get_result()->fetch_assoc();
                 <li><a href="userHome.php">Trang chủ</a></li>
                 <li><a href="products.php">Sản phẩm</a></li>
                 <li><a href="cart.php">Giỏ hàng</a></li>
+                
+                <li><a href="my_vouchers.php"> Ví voucher của tôi</a></li>
+                <li><a href="kho_voucher.php"> Săn voucher</a></li>
                 <li><a href="invoice.php">Hóa đơn</a></li>
                 <li class="active"><a href="personalProfile.php">Hồ sơ cá nhân</a></li>
             </ul>

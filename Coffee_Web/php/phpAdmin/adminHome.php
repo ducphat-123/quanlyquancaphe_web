@@ -14,7 +14,7 @@ if (!isset($_SESSION["role"]) || $_SESSION["role"] !== "admin") {
 <head>
     <meta charset="UTF-8">
     <title>Trang quản trị</title>
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/home.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../css/home.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -28,6 +28,7 @@ if (!isset($_SESSION["role"]) || $_SESSION["role"] !== "admin") {
                 <li><a href="adminHome.php">Trang chủ</a></li>
                 <li><a href="adminUsers.php">Quản lý người dùng</a></li>
                 <li><a href="categories.php">Quản lý danh mục sản phẩm</a></li>
+                <li><a href="vouchers.php">Quản lý mã giảm giá</a></li>
                 <li><a href="products.php">Quản lý sản phẩm</a></li>
                 <li><a href="orders.php">Quản lý hóa đơn</a></li>
                 <li><a href="statistics.php">Thống kê</a></li>

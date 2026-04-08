@@ -131,8 +131,8 @@ $products = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <title>Quản lý sản phẩm</title>
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/home.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="/quanlyquancaphe_web/Coffee_Web/css/productsadmin.css?v=<?php echo time(); ?>">
+       <link rel="stylesheet" href="../../css/home.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../css/productsadmin.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -145,6 +145,7 @@ $products = $conn->query($sql);
                 <li><a href="adminHome.php">Trang chủ</a></li>
                 <li><a href="adminUsers.php">Quản lý người dùng</a></li>
                 <li><a href="categories.php">Quản lý danh mục sản phẩm</a></li>
+                <li><a href="vouchers.php">Quản lý mã giảm giá</a></li>
                 <li><a href="products.php" class="active">Quản lý sản phẩm</a></li>
                 <li><a href="orders.php">Quản lý hóa đơn</a></li>
                 <li><a href="statistics.php">Thống kê</a></li>
